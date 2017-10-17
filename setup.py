@@ -67,3 +67,21 @@ def get_champions():
     ls2 = [data2['data'][b] for b in ls]
     champions = pd.DataFrame.from_dict(json_normalize(ls2), orient='columns')
     return champions
+    
+def Dataframe_From_CSV(string):
+    df = pd.read_csv(string, header=None)
+    df.columns = df.iloc[0] # set column names
+    df2 = df.iloc[1:,:] # get rid of the first row
+    return df2    
+    
+def get_champion_detail(name):
+    if not os.path.isfile('Champions/'+name+'.json'):
+        #print('didnt have the file')
+        urlretrieve("http://ddragon.leagueoflegends.com/cdn/6.24.1/data/en_US/champion/"+name+".json", 'Champions/'+name+'.json')
+    with open('Champions/'+name+'.json') as json_file:
+          data2 = json.loads(json_file.read())
+    ls = [a for a in data2['data']]
+    ls2 = [data2['data'][b] for b in ls]
+    champion_detail = pd.DataFrame.from_dict(json_normalize(ls2), orient='columns')
+    #print(champions)
+    return champion_detail
