@@ -1,11 +1,54 @@
 import json
 import pandas as pd
 import csv
+from sklearn import preprocessing
+import numpy as np
 
 # path leds to the folder containing the Champion json files
 # match_path leads to the folder containing the LeagueofLegends file
 path = 'C:/Users/Janine Prukop/Documents/MATH5364/ProjectRepo/ProjectRepo/Champions/'
 match_path = 'C:/Users/Janine Prukop/Documents/MATH5364/ProjectRepo/ProjectRepo/'
+
+
+
+
+
+# Read in the match information and turn it into a dataframe
+match_results = pd.read_csv(match_path + 'LeagueofLegends.csv', header = None)
+match_results.columns = match_results.iloc[0] # set column names
+match_results = match_results.iloc[1:,:] # get rid of the first row
+
+# Create series of the picks for each lane position
+top = match_results['blueTopChamp'].append(match_results['redTopChamp'])
+jungle = match_results['blueJungleChamp'].append(match_results['redJungleChamp'])
+middle = match_results['blueMiddleChamp'].append(match_results['redMiddleChamp'])
+adc = match_results['blueADCChamp'].append(match_results['redADCChamp'])
+support = match_results['blueSupportChamp'].append(match_results['redSupportChamp'])
+
+# Create Series of the count for each Champ, with the name as the index value
+top_champs = top.value_counts()
+jungle_champs = jungle.value_counts()
+middle_champs = middle.value_counts()
+adc_champs = adc.value_counts()
+support_champs = support.value_counts()
+
+#Append all the series into one dataframe, and set any NA value to 0 - 0 occurances of that champ in that position
+full_counts = pd.concat([top_champs, jungle_champs, middle_champs, adc_champs, support_champs], axis = 1, ignore_index=False)
+full_counts = full_counts.rename(index=str, columns= {0 : 'top', 1 : 'jungle', 2 : 'middle', 3 : 'adc', 4 : 'support'})
+full_counts = full_counts.fillna(0)
+
+# Realized I had rows that had a single count of one for the red and blue labels, dropped them
+full_counts = full_counts.drop(['blueADCChamp', 'blueJungleChamp', 'blueMiddleChamp', 'blueSupportChamp', 'blueTopChamp', 'redADCChamp', 'redJungleChamp', 'redMiddleChamp', 'redSupportChamp', 'redTopChamp'])
+
+# Turning the counts into a percentage of that position for the champion
+index_li = full_counts.index
+for p in index_li: full_counts.loc[p] = full_counts.loc[p]/sum(full_counts.loc[p])
+
+# "true" positions for each champion
+true_pos = full_counts.idxmax(axis = 1)
+
+
+
 
 
 # Reading all the json files with the champion data, reads in as dictionaries
@@ -212,6 +255,8 @@ info_df = pd.DataFrame(info_li)
 # Adds the name column to the info dataframe
 info_df['name'] = all_champs_df['id']
 
+# Turns the names column into the index
+info_df = info_df.set_index('name')
 
 # makes a list of the 'stats' for each champion (armor, armorperlevel, attackdamage, etc.)
 stats_li = [aatrox_dic['data']['Aatrox']['stats'], ahri_dic['data']['Ahri']['stats'], akali_dic['data']['Akali']['stats'], alistar_dic['data']['Alistar']['stats'], amumu_dic['data']['Amumu']['stats'], 
@@ -245,49 +290,24 @@ stats_li = [aatrox_dic['data']['Aatrox']['stats'], ahri_dic['data']['Ahri']['sta
 # Again, making a dataframe from the list
 stats_df = pd.DataFrame(stats_li)
 
-# dding name collumn to the dataframe
+# adding name collumn to the dataframe
 stats_df['name'] = all_champs_df['id']
 
-
-# Read in the match information and turn it into a dataframe
-match_results = pd.read_csv(match_path + 'LeagueofLegends.csv', header = None)
-match_results.columns = match_results.iloc[0] # set column names
-match_results = match_results.iloc[1:,:] # get rid of the first row
-
-# Create series of the picks for each lane position
-top = match_results['blueTopChamp'].append(match_results['redTopChamp'])
-jungle = match_results['blueJungleChamp'].append(match_results['redJungleChamp'])
-middle = match_results['blueMiddleChamp'].append(match_results['redMiddleChamp'])
-adc = match_results['blueADCChamp'].append(match_results['redADCChamp'])
-support = match_results['blueSupportChamp'].append(match_results['redSupportChamp'])
-
-# Create Series of the count for each Champ, with the name as the index value
-top_champs = top.value_counts()
-jungle_champs = jungle.value_counts()
-middle_champs = middle.value_counts()
-adc_champs = adc.value_counts()
-support_champs = support.value_counts()
-
-#Append all the series into one dataframe, and set any NA value to 0 - 0 occurances of that champ in that position
-full_counts = pd.concat([top_champs, jungle_champs, middle_champs, adc_champs, support_champs], axis = 1, ignore_index=False)
-full_counts = full_counts.rename(index=str, columns= {0 : 'top', 1 : 'jungle', 2 : 'middle', 3 : 'adc', 4 : 'support'})
-full_counts = full_counts.fillna(0)
-
-# Realized I had rows that had a single count of one for the red and blue labels, dropped them
-full_counts = full_counts.drop(['blueADCChamp', 'blueJungleChamp', 'blueMiddleChamp', 'blueSupportChamp', 'blueTopChamp', 'redADCChamp', 'redJungleChamp', 'redMiddleChamp', 'redSupportChamp', 'redTopChamp'])
-
-# Turning the counts into a percentage of that position for the champion
-index_li = full_counts.index
-for p in index_li: full_counts.loc[p] = full_counts.loc[p]/sum(full_counts.loc[p])
-
-# "true" positions for each champion
-true_pos = full_counts.idxmax(axis = 1)
+# Turns the names column into the index
+stats_df = stats_df.set_index('name')
 
 
 
 
 
+# Scaling the data
+stats_scaled = preprocessing.scale(stats_df)
+info_scaled = preprocessing.scale(info_df)
 
+stats_robust = preprocessing.robust_scale(stats_df)
+info_robust = preprocessing.robust_scale(info_df)
+
+# Upon visual inspection, "info" might not need to be normalized, it looks like it stays in the 1-10 range
 
 
 
