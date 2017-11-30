@@ -25,7 +25,7 @@ print(ban_1_top)
 print(ban_2_top)
 print(ban_3_top)
 
-top_blue_teams = game_data[game_data['bResult'] ==1]#.value_counts().reset_index()
+top_blue_teams = game_data[game_data['bResult'] =='1'].value_counts().reset_index()
 print(top_blue_teams)
 top_red_teams = game_data['redTeam'].value_counts().reset_index()
 
@@ -34,3 +34,5 @@ top_red_teams = game_data['redTeam'].value_counts().reset_index()
 #print(ls)
 abcd = get_champion_detail('Aatrox')
 print(abcd)
+
+# maybe need to do a classifier, and see if the teams 
