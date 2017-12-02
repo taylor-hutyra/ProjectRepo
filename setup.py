@@ -11,6 +11,7 @@ import random
 from urllib.request import urlretrieve
 import json
 from pandas.io.json import json_normalize
+import re
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -74,10 +75,10 @@ def Dataframe_From_CSV(string):
     df2 = df.iloc[1:,:] # get rid of the first row
     return df2    
     
-def get_champion_detail(name):
+def get_champion_detail(name, version = '6.24.1'):
     if not os.path.isfile('Champions/'+name+'.json'):
         #print('didnt have the file')
-        urlretrieve("http://ddragon.leagueoflegends.com/cdn/6.24.1/data/en_US/champion/"+name+".json", 'Champions/'+name+'.json')
+        urlretrieve("http://ddragon.leagueoflegends.com/cdn/"+version+"/data/en_US/champion/"+name+".json", 'Champions/'+name+'.json')
     with open('Champions/'+name+'.json') as json_file:
           data2 = json.loads(json_file.read())
     ls = [a for a in data2['data']]
